@@ -1,0 +1,77 @@
+#######################################################################
+### Sample LDIF for a "typical" LDAP-based personnel locator system
+#######################################################################
+###
+### Directory meta-information
+###
+version: 1
+objectClass: inetorgperson
+objectClass: person
+objectClass: user
+objectClass: top
+objectClass: organizationalPerson
+whenCreated: 20070101000000.0Z
+whenChanged: 20160101000000.0Z
+###
+### Information about the person/entity
+###
+dn: employeenumber=000000008,ou=people,dc=un
+distinguishedName: employeenumber=000000008,ou=people,dc=un
+displayName: Ban, Ki-moon (UN-SG)
+gecos: Ban, Ki-moon
+userPrincipalName: ki-moon.ban@un.org
+title: Secretary General
+sn: Ban
+givenName: Ki-Moon
+cn: BAN KI-MOON
+#middleName:
+description:8th Secretary General of the United Nations
+preferredlanguage: ko
+jpgephoto:< file://jpeg-ki-moon.jpg>
+###
+### Remote contact information
+####
+telephoneNumber: 212.963.1234
+facsimileTelephoneNumber: 212.963.4879
+mobile: 212.963.1236
+pager: 212.963.1237
+mail: secretary-general@un.org
+mail: ki-moon.ban@un.org
+mailNickname: ki-moon.ban
+preferredEmailAddress: secretary-general@un.org
+###
+### Physical location information
+###
+l: New York
+postalCode: 10017
+st: NY
+postalAddress: United Nations 405 East 42nd Street$New York, NY,10017
+street: United Nations 405 East 42nd Street
+roomNumber: O003A
+physicalDeliveryOfficeName: 405East:O003A
+###
+### System unique information
+###
+uid: UNSG0008
+uid: ki-moon.ban
+agencyUID: ki-moon.ban
+X500UID: UNSG0008
+employeeNumber: 000000008
+loginShell: /bin/sh
+unixHomeDirectory: /home/ki-moon.ban
+###
+### Organizational Units / Groups
+###
+ou: SG
+department: Office of the Secretary General
+company: United Nations
+gidNumber: 8
+memberOf: CN=Office-Of-The-Secretary-General,OU=Distribution Lists,OU=Accounts
+ ,DC=un
+###
+### Security information
+###
+altSecurityIdentities: X509:<I>C=UN,O=United Nations,OU=Secretary-General,
+  OU=Certification Authorities,<S>C=UN,O=United Nations,OU=Secretary-General,
+  OU=Credentials,OID.0.9.2342.19200300.100.1.1=ki-moon.ban CN=BAN KI-MOON
+userCertificate:: MIII0xdeadbeefAA
