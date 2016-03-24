@@ -68,6 +68,9 @@ if __name__ == '__main__':
 
     logging.debug("Connecting to %s", config["server"]["uris"])
     server_pool = ldap3.ServerPool(config["server"]["uris"], pool_strategy=ldap3.FIRST, active=True)
+    server_attributes = [ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES]
+    if config["server"]["add_attributes"]:
+        server_attributes.extend(config["server"]["add_attributes"])
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
     with ldap3.Connection(server_pool, read_only=True) as conn:
@@ -76,7 +79,7 @@ if __name__ == '__main__':
         entry_generator = conn.extend.standard.paged_search(search_base=config["server"]["base"],
                                                             search_filter=config["search"]["filter"],
                                                             search_scope=ldap3.SUBTREE,
-                                                            attributes=['*'],
+                                                            attributes=server_attributes,
                                                             get_operational_attributes=True,
                                                             paged_size=10,
                                                             generator=True)
