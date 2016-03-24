@@ -90,4 +90,6 @@ if __name__ == '__main__':
             logging.debug(len(conn.entries))
             logging.info(entry)
             logging.info(conn.entries[entry_counter].entry_to_ldif())
+            output_string = str(config["output"]["format"]).format(dn=entry["dn"], **entry["attributes"])
+            print(output_string)
             entry_counter += 1
