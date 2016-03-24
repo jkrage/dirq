@@ -40,6 +40,12 @@ def load_configuration(configuration_source, parent_configuration={}):
     return config
 
 
+def validate_format_string(format_string):
+    if [t[1] for t in string.Formatter().parse(format_string) if not t[1] or t[1].isnumeric()]:
+        raise RuntimeError("Output format string is not valid. Ensure all fields are named.")
+    return format_string
+
+
 def find_needed_attributes(format_string):
     """ :type: format_string: string.Formatter format_string
 
@@ -85,8 +91,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=args.loglevel,
                         format='%(levelname)-8s %(message)s')
 
-    # Load configuration
+    # Load configuration, validate parts
     config = load_configuration(args.config_file)
+    validate_format_string(config["outputs"]["default"])
 
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
