@@ -38,6 +38,14 @@ def load_configuration(configuration_source, parent_configuration={}):
         config = json.load(json_config_file)
     return config
 
+
+def format_multivalue_string(raw_value):
+    if isinstance(raw_value, list):
+        return " ".join(raw_value)
+    else:
+        return str(raw_value)
+
+
 # When called directly as a script...
 if __name__ == '__main__':
     # Setup the command line arguments.
@@ -66,7 +74,7 @@ if __name__ == '__main__':
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
-    formatters = {}
+    formatters = {"title":format_multivalue_string}
 
     # Establish the set of servers we will contact
     # Iteratively build the server list to work around ldap3 not
