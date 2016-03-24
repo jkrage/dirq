@@ -47,7 +47,7 @@ def validate_format_string(format_string):
 
 
 def find_needed_attributes(format_string):
-    """ :type: format_string: string.Formatter format_string
+    """ :type format_string: string.Formatter format_string
 
         Parse a string.format() format_string specification and extract any named fields
         that will be needed by the output.
