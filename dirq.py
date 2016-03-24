@@ -104,10 +104,17 @@ if __name__ == '__main__':
 
     server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
 
-    # Define the set of all attributes we will query
-    server_attributes = [ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES]
+    # Define the set of all attributes we will query, assemble from defaults,
+    # the configuration, and output needs.
+    attributes_to_query = set(["dn", "objectClass"])
+    attributes_to_query |= find_needed_attributes(config["outputs"]["default"])
     if config["server"]["add_attributes"]:
-        server_attributes.extend(config["server"]["add_attributes"])
+        attributes_to_query |= set(config["server"]["add_attributes"])
+    else:
+        attributes_to_query |= set([ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES])
+    logging.debug("attributes_to_query={}".format(attributes_to_query))
+    attribute_list = list(attributes_to_query)
+    logging.debug("attribute_list={}".format(attribute_list))
 
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
@@ -118,7 +125,7 @@ if __name__ == '__main__':
         entry_generator = conn.extend.standard.paged_search(search_base=config["server"]["base"],
                                                             search_filter=config["searches"]["default"],
                                                             search_scope=ldap3.SUBTREE,
-                                                            attributes=server_attributes,
+                                                            attributes=attribute_list,
                                                             get_operational_attributes=True,
                                                             paged_size=10,
                                                             generator=True)
