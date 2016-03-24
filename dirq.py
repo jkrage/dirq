@@ -17,6 +17,7 @@ try:
 except ImportError:
     # Fall back to Python2 module name
     import ConfigParser as configparser
+import ldap3
 
 # Pseudo-code
 #   Establish directory instance(s)
@@ -61,3 +62,29 @@ if __name__ == '__main__':
 
     # Load configuration
     config = load_configuration(args.config_file)
+
+    # During development, add logging from ldap3 library to our log stream
+    #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
+
+    logging.debug("Connecting to %s", config["server"]["uris"])
+    server_pool = ldap3.ServerPool(config["server"]["uris"], pool_strategy=ldap3.FIRST, active=True)
+    # TODO: Consider schema load/save
+    # TODO: Add user options, SSL/TLS options to connection
+    with ldap3.Connection(server_pool, read_only=True) as conn:
+        #conn.search(config["server"]["base"], config["search"]["filter"])
+        #for entry in conn.response
+        entry_generator = conn.extend.standard.paged_search(search_base=config["server"]["base"],
+                                                            search_filter=config["search"]["filter"],
+                                                            search_scope=ldap3.SUBTREE,
+                                                            attributes=['*'],
+                                                            get_operational_attributes=True,
+                                                            paged_size=10,
+                                                            generator=True)
+        # Keep a counter, so the non-dict object from conn.entries can be accessed
+        # Other approach iterates entry in conn.response to access a dict version
+        entry_counter = 0
+        for entry in entry_generator:
+            logging.debug(len(conn.entries))
+            logging.info(entry)
+            logging.info(conn.entries[entry_counter].entry_to_ldif())
+            entry_counter += 1
