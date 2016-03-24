@@ -11,6 +11,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import logging
 import argparse
+import json
 try:
     import configparser
 except ImportError:
@@ -28,6 +29,14 @@ except ImportError:
 #   Cleanup directory instance(s)
 #     Teardown any outstanding connections
 
+
+def load_configuration(configuration_source, parent_configuration={}):
+    assert configuration_source is not None
+    config = parent_configuration
+    with open(configuration_source) as json_config_file:
+        config = json.load(json_config_file)
+    return config
+
 # When called directly as a script...
 if __name__ == '__main__':
     # Setup the command line arguments.
@@ -42,10 +51,13 @@ if __name__ == '__main__':
                         dest='loglevel', action='store_const',
                         const=logging.INFO, default=logging.INFO)
     parser.add_argument('--config', help='specify a configuration file',
-                        dest='config_file')
+                        dest='config_file', default="config.json")
     args = parser.parse_args()
     print(args)
 
     # Setup logging system
     logging.basicConfig(level=args.loglevel,
                         format='%(levelname)-8s %(message)s')
+
+    # Load configuration
+    config = load_configuration(args.config_file)
