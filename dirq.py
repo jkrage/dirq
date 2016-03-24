@@ -10,6 +10,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 import logging
+import string
 import argparse
 import json
 try:
@@ -37,6 +38,20 @@ def load_configuration(configuration_source, parent_configuration={}):
     with open(configuration_source) as json_config_file:
         config = json.load(json_config_file)
     return config
+
+
+def find_needed_attributes(format_string):
+    """ Parse a string.format() format_string specification and extract any named fields
+        that will be needed by the output.
+
+        Ignore position-based (name is all numeric) and un-named fields (None).
+
+        This can be used to ensure those fields are available prior to needing them.
+
+        returns: set of named fields
+    """
+    assert format_string is not None
+    return set([t[1] for t in string.Formatter().parse(format_string) if t[1] and not t[1].isnumeric()])
 
 
 def format_multivalue_string(raw_value):
