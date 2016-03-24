@@ -100,17 +100,6 @@ if __name__ == '__main__':
 
     formatters = {"title":format_multivalue_string}
 
-    # Establish the set of servers we will contact
-    # Iteratively build the server list to work around ldap3 not
-    # accepting formatter in ServerPool calls
-    logging.debug("Attempting connections to %s", config["server"]["uris"])
-    server_list = []
-    for uri in config["server"]["uris"]:
-        this_server = ldap3.Server(uri, formatter=formatters)
-        server_list.append(this_server)
-
-    server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
-
     # Define the set of all attributes we will query, assemble from defaults,
     # the configuration, and output needs.
     # Remove dn to avoid a duplicate key error in output, where we auto-force dn inclusion anyway
@@ -124,6 +113,16 @@ if __name__ == '__main__':
     logging.debug("attributes_to_query={}".format(attributes_to_query))
     attribute_list = list(attributes_to_query)
     logging.debug("attribute_list={}".format(attribute_list))
+
+    # Establish the set of servers we will contact
+    # Iteratively build the server list to work around ldap3 not
+    # accepting formatter in ServerPool calls
+    logging.debug("Attempting connections to %s", config["server"]["uris"])
+    server_list = []
+    for uri in config["server"]["uris"]:
+        this_server = ldap3.Server(uri, formatter=formatters)
+        server_list.append(this_server)
+    server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
 
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
