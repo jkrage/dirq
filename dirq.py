@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # Establish the set of servers we will contact
     # Iteratively build the server list to work around ldap3 not
     # accepting formatter in ServerPool calls
-    logging.debug("Connecting to %s", config["server"]["uris"])
+    logging.debug("Attempting connections to %s", config["server"]["uris"])
     server_list = []
     for uri in config["server"]["uris"]:
         this_server = ldap3.Server(uri, formatter=formatters)
@@ -97,6 +97,7 @@ if __name__ == '__main__':
     with ldap3.Connection(server_pool, read_only=True) as conn:
         #conn.search(config["server"]["base"], config["search"]["filter"])
         #for entry in conn.response
+        logging.debug("Reached server %s", conn.server)
         entry_generator = conn.extend.standard.paged_search(search_base=config["server"]["base"],
                                                             search_filter=config["searches"]["default"],
                                                             search_scope=ldap3.SUBTREE,
