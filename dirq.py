@@ -66,11 +66,24 @@ if __name__ == '__main__':
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
+    formatters = {}
+
+    # Establish the set of servers we will contact
+    # Iteratively build the server list to work around ldap3 not
+    # accepting formatter in ServerPool calls
     logging.debug("Connecting to %s", config["server"]["uris"])
-    server_pool = ldap3.ServerPool(config["server"]["uris"], pool_strategy=ldap3.FIRST, active=True)
+    server_list = []
+    for uri in config["server"]["uris"]:
+        this_server = ldap3.Server(uri, formatter=formatters)
+        server_list.append(this_server)
+
+    server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
+
+    # Define the set of all attributes we will query
     server_attributes = [ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES]
     if config["server"]["add_attributes"]:
         server_attributes.extend(config["server"]["add_attributes"])
+
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
     with ldap3.Connection(server_pool, read_only=True) as conn:
