@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
-    with ldap3.Connection(server_pool, read_only=True) as conn:
+    with ldap3.Connection(server_pool, read_only=True, return_empty_attributes=True) as conn:
         #conn.search(config["server"]["base"], config["search"]["filter"])
         #for entry in conn.response
         logging.debug("Reached server %s", conn.server)
