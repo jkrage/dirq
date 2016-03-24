@@ -106,12 +106,14 @@ if __name__ == '__main__':
 
     # Define the set of all attributes we will query, assemble from defaults,
     # the configuration, and output needs.
-    attributes_to_query = set(["dn", "objectClass"])
+    # Remove dn to avoid a duplicate key error in output, where we auto-force dn inclusion anyway
+    attributes_to_query = set(["objectClass"])
     attributes_to_query |= find_needed_attributes(config["outputs"]["default"])
     if config["server"]["add_attributes"]:
         attributes_to_query |= set(config["server"]["add_attributes"])
     else:
         attributes_to_query |= set([ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES])
+    attributes_to_query.discard("dn")
     logging.debug("attributes_to_query={}".format(attributes_to_query))
     attribute_list = list(attributes_to_query)
     logging.debug("attribute_list={}".format(attribute_list))
