@@ -41,14 +41,16 @@ def load_configuration(configuration_source, parent_configuration={}):
 
 
 def find_needed_attributes(format_string):
-    """ Parse a string.format() format_string specification and extract any named fields
+    """ :type: format_string: string.Formatter format_string
+
+        Parse a string.format() format_string specification and extract any named fields
         that will be needed by the output.
 
         Ignore position-based (name is all numeric) and un-named fields (None).
 
         This can be used to ensure those fields are available prior to needing them.
 
-        returns: set of named fields
+        :rtype: set() of named fields
     """
     assert format_string is not None
     return set([t[1] for t in string.Formatter().parse(format_string) if t[1] and not t[1].isnumeric()])
