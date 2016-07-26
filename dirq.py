@@ -18,7 +18,13 @@ try:
 except ImportError:
     # Fall back to Python2 module name
     import ConfigParser as configparser
+import sys
+
+# Non-standard imports
 import ldap3
+
+# Package imports
+import DirectoryQuery.config
 
 # Pseudo-code
 #   Establish directory instance(s)
@@ -69,8 +75,7 @@ def format_multivalue_string(raw_value):
         return str(raw_value)
 
 
-# When called directly as a script...
-if __name__ == '__main__':
+def main(argv):
     # Setup the command line arguments.
     parser = argparse.ArgumentParser(description='Query a central directory')
     parser.add_argument('-q', '--quiet', help='minimize logging output',
@@ -84,7 +89,7 @@ if __name__ == '__main__':
                         const=logging.INFO, default=logging.INFO)
     parser.add_argument('--config', help='specify a configuration file',
                         dest='config_file', default="config.json")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     print(args)
 
     # Setup logging system
@@ -94,6 +99,9 @@ if __name__ == '__main__':
     # Load configuration, validate parts
     config = load_configuration(args.config_file)
     validate_format_string(config["outputs"]["default"])
+
+    # Test config
+    myconfig = DirectoryQuery.config.Config(filename=args.config_file)
 
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
@@ -147,3 +155,7 @@ if __name__ == '__main__':
             output_string = str(config["outputs"]["default"]).format(dn=entry["dn"], **entry["attributes"])
             print(output_string)
             entry_counter += 1
+
+# When called directly as a script...
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
