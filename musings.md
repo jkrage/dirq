@@ -35,6 +35,23 @@ Output Options
   * Output handler class
 * User-custom formats/arrangements
   * print().format(*attributes)
+ 
+Configuration File
+------------------
+* Initially .json format, nested tree:
+  * Service
+    * name -- reference label for the service
+    * Server
+      * name -- reference label for the server
+      * uris[] -- one or more server URIs to query
+      * base -- base OU for queries
+      * add_attributes[] -- extra attributes to request on each query
+    * Searches
+      * name -- reference label for the search
+      * search -- filter to apply during search
+    * Outputs
+      * name -- reference label for the output type
+      * string -- output string format (Python "".format())
 
 Stretch Goals
 -------------
