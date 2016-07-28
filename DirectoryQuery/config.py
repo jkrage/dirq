@@ -16,10 +16,27 @@ import ldap3
 class Server(object):
     """ Class for server information """
     def __init__(self, *args, **kwargs):
-        logging.debug("Server: {}".format(kwargs))
-        self.uris = None
+        self.uris = []
         self.base = None
-        self.add_attributes = None
+        self.add_attributes = []
+
+        if kwargs["name"]:
+            self.name = kwargs["name"]
+        for uri in kwargs["uris"]:
+            self.uris.append(uri)
+        if kwargs["base"]:
+            self.base = kwargs["base"]
+        for attribute in kwargs["add_attributes"]:
+            self.add_attributes.append(attribute)
+
+    def __repr__(self):
+        return("{}.{}(name=\"{}\", uris={}, base=\"{}\", add_attributes={})"
+               "".format(self.__module__,
+                         type(self).__name__,
+                         self.name,
+                         self.uris,
+                         self.base,
+                         self.add_attributes))
 
 
 class Searches(object):
