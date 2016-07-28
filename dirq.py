@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     # Load configuration, validate parts
     config = load_configuration(args.config_file)
-    validate_format_string(config["outputs"]["default"])
+    validate_format_string(config["service"]["outputs"]["default"])
 
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
@@ -104,9 +104,9 @@ if __name__ == '__main__':
     # the configuration, and output needs.
     # Remove dn to avoid a duplicate key error in output, where we auto-force dn inclusion anyway
     attributes_to_query = set(["objectClass"])
-    attributes_to_query |= find_needed_attributes(config["outputs"]["default"])
-    if config["server"]["add_attributes"]:
-        attributes_to_query |= set(config["server"]["add_attributes"])
+    attributes_to_query |= find_needed_attributes(config["service"]["outputs"]["default"])
+    if config["service"]["server"]["add_attributes"]:
+        attributes_to_query |= set(config["service"]["server"]["add_attributes"])
     else:
         attributes_to_query |= set([ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES])
     attributes_to_query.discard("dn")
@@ -117,9 +117,9 @@ if __name__ == '__main__':
     # Establish the set of servers we will contact
     # Iteratively build the server list to work around ldap3 not
     # accepting formatter in ServerPool calls
-    logging.debug("Attempting connections to %s", config["server"]["uris"])
+    logging.debug("Attempting connections to %s", config["service"]["server"]["uris"])
     server_list = []
-    for uri in config["server"]["uris"]:
+    for uri in config["service"]["server"]["uris"]:
         this_server = ldap3.Server(uri, formatter=formatters)
         server_list.append(this_server)
     server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
@@ -127,11 +127,11 @@ if __name__ == '__main__':
     # TODO: Consider schema load/save
     # TODO: Add user options, SSL/TLS options to connection
     with ldap3.Connection(server_pool, read_only=True, return_empty_attributes=True) as conn:
-        #conn.search(config["server"]["base"], config["search"]["filter"])
+        #conn.search(config["service"]["server"]["base"], config["search"]["filter"])
         #for entry in conn.response
         logging.debug("Reached server %s", conn.server)
-        entry_generator = conn.extend.standard.paged_search(search_base=config["server"]["base"],
-                                                            search_filter=config["searches"]["default"],
+        entry_generator = conn.extend.standard.paged_search(search_base=config["service"]["server"]["base"],
+                                                            search_filter=config["service"]["searches"]["default"],
                                                             search_scope=ldap3.SUBTREE,
                                                             attributes=attribute_list,
                                                             get_operational_attributes=True,
