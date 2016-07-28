@@ -43,7 +43,20 @@ class Searches(object):
     """ Class for search information """
     def __init__(self, *args, **kwargs):
         logging.debug("Searches: {}".format(kwargs))
-        self.label = None
+        self.filters = dict()
+
+        for name,search in kwargs.items():
+            self.filters[name] = search
+
+    @property
+    def filter(self, filter_name=None):
+        return self.filters["filter_name"]
+
+    def __repr__(self):
+        return ("{}.{}({})"
+                "".format(self.__module__,
+                          type(self).__name__,
+                          self.filters))
 
 
 class Outputs(object):
@@ -78,6 +91,7 @@ class Config(object):
                 self.section_map[section](kwargs[section])
         logging.debug("Config.servers  = {}".format(self.servers))
         logging.debug("Config.searches = {}".format(self.searches))
+        logging.info("==== {}".format(self.searches[0].filter("default")))
         logging.debug("Config.outputs  = {}".format(self.outputs))
 
     def add_server(self, server={}):
