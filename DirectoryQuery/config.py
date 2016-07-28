@@ -6,11 +6,9 @@
     DirectoryQuery, configuration support
 
 """
-from __future__ import unicode_literals
 import logging
-import string
 import json
-import ldap3
+import codecs
 
 
 class Server(object):
@@ -71,6 +69,7 @@ class Config(object):
         self.servers = set()
         self.searches = set()
         self.outputs = set()
+        self.encoding = "utf-8"
 
         self.section_map = {'server': self.add_server,
                             'searches': self.add_search,
@@ -79,7 +78,7 @@ class Config(object):
 
         if "filename" in kwargs:
             logging.debug("Config.filename={}".format(kwargs["filename"]))
-            self._config = self.load_configuration(kwargs["filename"])
+            self._config = self.load_configuration(kwargs["filename"], encoding=self.encoding)
         logging.debug("_config={}".format(self._config))
 
         # Extract known sections from incoming settings
@@ -106,8 +105,9 @@ class Config(object):
         logging.debug("Adding output configuration {}".format(output))
         self.outputs.add(Outputs(**output))
 
+
     @staticmethod
-    def load_configuration(configuration_source, parent_configuration={}):
+    def load_configuration(configuration_source, parent_configuration={}, encoding="utf-8"):
         """
 
         :type configuration_source: string
@@ -115,6 +115,6 @@ class Config(object):
         """
         assert configuration_source is not None
         config = parent_configuration
-        with open(configuration_source, "rt") as json_config_file:
+        with codecs.open(configuration_source, "rt", encoding=encoding) as json_config_file:
             config = json.load(json_config_file)
         return config
