@@ -51,46 +51,47 @@ class Searches(object):
         return self.filters["filter_name"]
 
     def __repr__(self):
-        return ("{}.{}({})"
-                "".format(self.__module__,
-                          type(self).__name__,
-                          self.filters))
+        return("{}.{}({})"
+               "".format(self.__module__,
+                         type(self).__name__,
+                         self.filters))
 
 
 class Outputs(object):
     """ Class for output formats """
     def __init__(self, *args, **kwargs):
         logging.debug("Outputs: {}".format(kwargs))
-        self.label = None
+        self.formats = dict()
+
+        for name,output_string in kwargs.items():
+            self.formats[name] = output_string
+
+    def __repr__(self):
+        return ("{}.{}({})"
+                "".format(self.__module__,
+                          type(self).__name__,
+                          self.formats))
 
 
-class Config(object):
+class Service(object):
     def __init__(self, *args, **kwargs):
         self.servers = set()
         self.searches = set()
         self.outputs = set()
-        self.encoding = "utf-8"
 
         self.section_map = {'server': self.add_server,
                             'searches': self.add_search,
                             'outputs': self.add_output
                             }
 
-        if "filename" in kwargs:
-            logging.debug("Config.filename={}".format(kwargs["filename"]))
-            self._config = self.load_configuration(kwargs["filename"], encoding=self.encoding)
-        logging.debug("_config={}".format(self._config))
-
         # Extract known sections from incoming settings
         for section in self.section_map:
             logging.debug("Seeking config section {}".format(section))
-            if section in self._config:
-                self.section_map[section](self._config[section])
             if section in kwargs:
                 self.section_map[section](kwargs[section])
         logging.debug("Config.servers  = {}".format(self.servers))
         logging.debug("Config.searches = {}".format(self.searches))
-        logging.info("==== {}".format(self.searches[0].filter("default")))
+        #logging.info("==== {}".format(self.searches[0].filter("default")))
         logging.debug("Config.outputs  = {}".format(self.outputs))
 
     def add_server(self, server={}):
@@ -105,6 +106,38 @@ class Config(object):
         logging.debug("Adding output configuration {}".format(output))
         self.outputs.add(Outputs(**output))
 
+
+class Config(object):
+    def __init__(self, *args, **kwargs):
+        self.services_available = dict()
+        self.encoding = "utf-8"
+
+        if "filename" in kwargs:
+            logging.debug("Config.filename={}".format(kwargs["filename"]))
+            self._filename = kwargs["filename"]
+            self._config = self.load_configuration(kwargs["filename"], encoding=self.encoding)
+        logging.debug("_config={}".format(self._config))
+
+        # TODO: accept additional configs in kwargs
+        for svc in self._config:
+            service = self._config[svc]
+            self.services_available[svc] = Service(name=service["name"],
+                                                   server=service["server"],
+                                                   searches=service["searches"],
+                                                   outputs=service["outputs"])
+
+    def __str__(self):
+        args = []
+        if self._filename:
+            args.append(u'filename="{}"'.format(self._filename))
+
+        args.append(u'services=["{}"]'
+                    u''.format(u'","'.join(self.services_available.keys())))
+
+        return(u'{}.{}({})'
+               u''.format(self.__module__,
+                         type(self).__name__,
+                         u', '.join(args)))
 
     @staticmethod
     def load_configuration(configuration_source, parent_configuration={}, encoding="utf-8"):
