@@ -18,6 +18,8 @@ class Server(object):
         self.base = None
         self.add_attributes = []
 
+        for uri in args:
+            self.uris.append(uri)
         for uri in kwargs["uris"]:
             self.uris.append(uri)
         if kwargs["base"]:
@@ -43,9 +45,11 @@ class Searches(object):
         for name,search in kwargs.items():
             self.filters[name] = search
 
-    @property
-    def filter(self, filter_name=None):
-        return self.filters["filter_name"]
+    def filter(self, filter_name):
+        filter = None
+        if filter_name in self.filters:
+            filter = self.filters[filter_name]
+        return filter
 
     def __repr__(self):
         return("{}.{}({})"
@@ -71,10 +75,18 @@ class Outputs(object):
 
 
 class Service(object):
+    """
+    A Service is an encapsulation of the specific information required
+    to access a particular directory service instantiation. This includes
+    the URI(s) to contact, one or more searches that can be run against
+    any of those URIs, and one or more outputs the end-user can use to
+    format the output from the search.
+
+    """
     def __init__(self, *args, **kwargs):
-        self.servers = set()
-        self.searches = set()
-        self.outputs = set()
+        self.servers = []
+        self.searches = []
+        self.outputs = []
 
         self.section_map = {'server': self.add_server,
                             'searches': self.add_search,
@@ -88,20 +100,19 @@ class Service(object):
                 self.section_map[section](kwargs[section])
         logging.debug("Config.servers  = {}".format(self.servers))
         logging.debug("Config.searches = {}".format(self.searches))
-        #logging.info("==== {}".format(self.searches[0].filter("default")))
         logging.debug("Config.outputs  = {}".format(self.outputs))
 
     def add_server(self, server={}):
         logging.debug("Adding server configuration {}".format(server))
-        self.servers.add(Server(**server))
+        self.servers.append(Server(**server))
 
     def add_search(self, search={}):
         logging.debug("Adding search configuration {}".format(search))
-        self.searches.add(Searches(**search))
+        self.searches.append(Searches(**search))
 
     def add_output(self, output={}):
         logging.debug("Adding output configuration {}".format(output))
-        self.outputs.add(Outputs(**output))
+        self.outputs.append(Outputs(**output))
 
 
 class Config(object):
