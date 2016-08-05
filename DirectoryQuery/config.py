@@ -128,6 +128,7 @@ class Config(object):
     def __init__(self, *args, **kwargs):
         self.services_available = dict()
         self.encoding = "utf-8"
+        self.default_service = None
 
         if "filename" in kwargs:
             logging.debug("Config.filename={}".format(kwargs["filename"]))
@@ -138,10 +139,24 @@ class Config(object):
         # TODO: accept additional configs in kwargs
         for svc in self._config:
             service = self._config[svc]
-            self.services_available[svc] = Service(name=service["name"],
-                                                   server=service["server"],
-                                                   searches=service["searches"],
-                                                   outputs=service["outputs"])
+            self.services_available[service["name"]] = Service(name=service["name"],
+                                                               server=service["server"],
+                                                               searches=service["searches"],
+                                                               outputs=service["outputs"])
+            if not self.default_service or service["name"].is_default:
+                self.default_service = service["name"]
+
+    @property
+    def services(self):
+        return(frozenset(self.services_available.keys()))
+
+    def service(self, name=None):
+        svc = None
+        if not name:
+            name = self.default_service
+        if name in self.services_available:
+            svc = self.services_available[name]
+        return svc
 
     def __str__(self):
         args = []
