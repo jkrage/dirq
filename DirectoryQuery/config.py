@@ -19,7 +19,7 @@ class Server(object):
     def __init__(self, *args, **kwargs):
         self.uris = []
         self.base = None
-        self.add_attributes = []
+        self.attributes = set(["objectClass"])
 
         for uri in args:
             self.uris.append(uri)
@@ -28,15 +28,15 @@ class Server(object):
         if kwargs["base"]:
             self.base = kwargs["base"]
         for attribute in kwargs["add_attributes"]:
-            self.add_attributes.append(attribute)
+            self.attributes.add(attribute)
 
     def __repr__(self):
-        return("{}.{}(uris={}, base=\"{}\", add_attributes={})"
+        return("{}.{}(uris={}, base=\"{}\", attributes={})"
                "".format(self.__module__,
                          type(self).__name__,
                          self.uris,
                          self.base,
-                         self.add_attributes))
+                         self.attributes))
 
 
 class Searches(object):
@@ -45,7 +45,7 @@ class Searches(object):
         logging.debug("Searches: {}".format(kwargs))
         self.filters = dict()
 
-        for name,search in kwargs.items():
+        for name, search in kwargs.items():
             self.filters[name] = search
 
     def filter(self, filter_name):
@@ -67,7 +67,7 @@ class Outputs(object):
         logging.debug("Outputs: {}".format(kwargs))
         self.formats = dict()
 
-        for name,output_string in kwargs.items():
+        for name, output_string in kwargs.items():
             self.formats[name] = output_string
 
             # TODO: Consider keeping copies of these sets in an Output class
@@ -111,15 +111,15 @@ class Service(object):
         logging.debug("Config.searches = {}".format(self.searches))
         logging.debug("Config.outputs  = {}".format(self.outputs))
 
-    def add_server(self, server={}):
+    def add_server(self, server=dict()):
         logging.debug("Adding server configuration {}".format(server))
         self.servers.append(Server(**server))
 
-    def add_search(self, search={}):
+    def add_search(self, search=dict()):
         logging.debug("Adding search configuration {}".format(search))
         self.searches.append(Searches(**search))
 
-    def add_output(self, output={}):
+    def add_output(self, output=dict()):
         logging.debug("Adding output configuration {}".format(output))
         self.outputs.append(Outputs(**output))
 
@@ -153,18 +153,19 @@ class Config(object):
 
         return(u'{}.{}({})'
                u''.format(self.__module__,
-                         type(self).__name__,
-                         u', '.join(args)))
+                          type(self).__name__,
+                          u', '.join(args)))
 
     @staticmethod
-    def load_configuration(configuration_source, parent_configuration={}, encoding="utf-8"):
+    def load_configuration(configuration_source, parent_configuration, encoding="utf-8"):
         """
 
         :type configuration_source: string
         :type parent_configuration: dict
         """
         assert configuration_source is not None
-        config = parent_configuration
+        if parent_configuration:
+            config = parent_configuration
         with codecs.open(configuration_source, "rt", encoding=encoding) as json_config_file:
             config = json.load(json_config_file)
         return config
