@@ -157,7 +157,7 @@ class Config(object):
                           u', '.join(args)))
 
     @staticmethod
-    def load_configuration(configuration_source, parent_configuration, encoding="utf-8"):
+    def load_configuration(configuration_source, parent_configuration=None, encoding="utf-8"):
         """
 
         :type configuration_source: string
