@@ -10,6 +10,9 @@ import logging
 import json
 import codecs
 
+# Package imports
+import DirectoryQuery.utils
+
 
 class Server(object):
     """ Class for server information """
@@ -66,6 +69,12 @@ class Outputs(object):
 
         for name,output_string in kwargs.items():
             self.formats[name] = output_string
+
+            # TODO: Consider keeping copies of these sets in an Output class
+            all_format_elements = DirectoryQuery.utils.get_format_fields(output_string)
+            named_format_elements = DirectoryQuery.utils.get_named_format_fields(output_string)
+            if all_format_elements != named_format_elements:
+                logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
 
     def __repr__(self):
         return ("{}.{}({})"
