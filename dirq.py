@@ -24,6 +24,7 @@ import sys
 import ldap3
 
 # Package imports
+import DirectoryQuery.utils
 import DirectoryQuery.config
 
 # Pseudo-code
@@ -44,28 +45,6 @@ def load_configuration(configuration_source, parent_configuration={}):
     with open(configuration_source) as json_config_file:
         config = json.load(json_config_file)
     return config
-
-
-def validate_format_string(format_string):
-    if [t[1] for t in string.Formatter().parse(format_string) if not t[1] or t[1].isnumeric()]:
-        raise RuntimeError("Output format string is not valid. Ensure all fields are named.")
-    return format_string
-
-
-def find_needed_attributes(format_string):
-    """ :type format_string: string.Formatter format_string
-
-        Parse a string.format() format_string specification and extract any named fields
-        that will be needed by the output.
-
-        Ignore position-based (name is all numeric) and un-named fields (None).
-
-        This can be used to ensure those fields are available prior to needing them.
-
-        :rtype: set() of named fields
-    """
-    assert format_string is not None
-    return set([t[1] for t in string.Formatter().parse(format_string) if t[1] and not t[1].isnumeric()])
 
 
 def format_multivalue_string(raw_value):
@@ -98,7 +77,6 @@ def main(argv):
 
     # Load configuration, validate parts
     config = load_configuration(args.config_file)
-    validate_format_string(config["service"]["outputs"]["default"])
 
     # Test config
     myconfig = DirectoryQuery.config.Config(filename=args.config_file)
@@ -112,7 +90,7 @@ def main(argv):
     # the configuration, and output needs.
     # Remove dn to avoid a duplicate key error in output, where we auto-force dn inclusion anyway
     attributes_to_query = set(["objectClass"])
-    attributes_to_query |= find_needed_attributes(config["service"]["outputs"]["default"])
+    attributes_to_query |= DirectoryQuery.utils.get_named_format_fields(config["service"]["outputs"]["default"])
     if config["service"]["server"]["add_attributes"]:
         attributes_to_query |= set(config["service"]["server"]["add_attributes"])
     else:
