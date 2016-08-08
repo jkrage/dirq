@@ -19,7 +19,7 @@ class Server(object):
     def __init__(self, *args, **kwargs):
         self.uris = []
         self.base = None
-        self.attributes = set(["objectClass"])
+        self.attributes = set([u'objectClass'])
 
         for uri in args:
             self.uris.append(uri)
@@ -31,56 +31,54 @@ class Server(object):
             self.attributes.add(attribute)
 
     def __repr__(self):
-        return("{}.{}(uris={}, base=\"{}\", attributes={})"
-               "".format(self.__module__,
-                         type(self).__name__,
-                         self.uris,
-                         self.base,
-                         self.attributes))
+        return(u'{}.{}(uris={}, base=\"{}\", attributes={})'
+               u''.format(self.__module__,
+                          type(self).__name__,
+                          self.uris,
+                          self.base,
+                          self.attributes))
 
 
-class Searches(object):
-    """ Class for search information """
+class Search(object):
+    """ Class for a search setup """
     def __init__(self, *args, **kwargs):
-        logging.debug("Searches: {}".format(kwargs))
-        self.filters = dict()
+        logging.debug("Search: {}".format(kwargs))
+        self.filter = None
 
-        for name, search in kwargs.items():
-            self.filters[name] = search
-
-    def filter(self, filter_name):
-        filter = None
-        if filter_name in self.filters:
-            filter = self.filters[filter_name]
-        return filter
+        for filter_string in args:
+            self.filter = filter_string
+        self.filter = kwargs.setdefault(u'filter', None)
 
     def __repr__(self):
-        return("{}.{}({})"
-               "".format(self.__module__,
-                         type(self).__name__,
-                         self.filters))
+        return (u'{}.{}({})'
+                u''.format(self.__module__,
+                           type(self).__name__,
+                           self.filter))
 
 
-class Outputs(object):
+class Output(object):
     """ Class for output formats """
     def __init__(self, *args, **kwargs):
-        logging.debug("Outputs: {}".format(kwargs))
-        self.formats = dict()
+        logging.debug("Output: {}".format(kwargs))
+        self.output = None
+        self.all_format_elements = None
+        self.named_format_elements = None
 
-        for name, output_string in kwargs.items():
-            self.formats[name] = output_string
+        for output_string in args:
+            self.output = output_string
+        self.output = kwargs.setdefault(u'output', None)
 
-            # TODO: Consider keeping copies of these sets in an Output class
-            all_format_elements = DirectoryQuery.utils.get_format_fields(output_string)
-            named_format_elements = DirectoryQuery.utils.get_named_format_fields(output_string)
-            if all_format_elements != named_format_elements:
-                logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
+        if self.output:
+            self.all_format_elements = DirectoryQuery.utils.get_format_fields(self.output)
+            self.named_format_elements = DirectoryQuery.utils.get_named_format_fields(self.output)
+            #if self.all_format_elements != self.named_format_elements:
+            #    logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
 
     def __repr__(self):
-        return ("{}.{}({})"
-                "".format(self.__module__,
-                          type(self).__name__,
-                          self.formats))
+        return (u'{}.{}({})'
+                u''.format(self.__module__,
+                           type(self).__name__,
+                           self.output))
 
 
 class Service(object):
@@ -88,14 +86,16 @@ class Service(object):
     A Service is an encapsulation of the specific information required
     to access a particular directory service instantiation. This includes
     the URI(s) to contact, one or more searches that can be run against
-    any of those URIs, and one or more outputs the end-user can use to
+    any of those URIs, and one or more registry the end-user can use to
     format the output from the search.
 
     """
     def __init__(self, *args, **kwargs):
         self.servers = []
-        self.searches = []
-        self.outputs = []
+        self.searches = dict()
+        self.outputs = dict()
+        self.default_output = None
+        self.default_search = None
 
         self.section_map = {'server': self.add_server,
                             'searches': self.add_search,
@@ -116,12 +116,35 @@ class Service(object):
         self.servers.append(Server(**server))
 
     def add_search(self, search=dict()):
-        logging.debug("Adding search configuration {}".format(search))
-        self.searches.append(Searches(**search))
+        for name, filter_string in search.items():
+            logging.debug("Adding search configuration {}".format(search))
+            self.searches[name] = Search(filter=filter_string)
+        if not self.default_search:
+            self.default_search = name
 
     def add_output(self, output=dict()):
-        logging.debug("Adding output configuration {}".format(output))
-        self.outputs.append(Outputs(**output))
+        for name, output_string in output.items():
+            logging.debug("Adding output configuration {}".format(output))
+            self.outputs[name] = Output(output=output_string)
+            if not self.default_output:
+                self.default_output = name
+            if self.outputs[name].all_format_elements != self.outputs[name].named_format_elements:
+                logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
+
+
+    def __repr__(self):
+        args = []
+        args.append(u'server=["{}"]'
+                    u''.format(self.servers))
+        args.append(u'searches=["{}"]'
+                    u''.format(self.searches))
+        args.append(u'outputs=["{}"]'
+                    u''.format(self.outputs))
+
+        return (u'{}.{}({})'
+                u''.format(self.__module__,
+                           type(self).__name__,
+                           u', '.join(args)))
 
 
 class Config(object):
@@ -148,7 +171,7 @@ class Config(object):
 
     @property
     def services(self):
-        return(frozenset(self.services_available.keys()))
+        return(self.services_available.keys())
 
     def service(self, name=None):
         svc = None
@@ -158,7 +181,7 @@ class Config(object):
             svc = self.services_available[name]
         return svc
 
-    def __str__(self):
+    def __repr__(self):
         args = []
         if self._filename:
             args.append(u'filename="{}"'.format(self._filename))
