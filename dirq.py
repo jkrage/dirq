@@ -48,8 +48,9 @@ def load_configuration(configuration_source, parent_configuration={}):
 
 
 def format_multivalue_string(raw_value):
+    logging.info(">>>>>>>>>>>>>>> format_multivalue_string={}".format(raw_value))
     if isinstance(raw_value, list):
-        return " ".join(raw_value)
+        return u' '.join(raw_value)
     else:
         return str(raw_value)
 
@@ -92,7 +93,7 @@ def main(argv):
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
-    formatters = {"title": format_multivalue_string}
+    formatters = {u'title': format_multivalue_string}
 
     # Define the set of all attributes we will query, assemble from the
     # service/server configuration, and fields used by the selected output.
@@ -139,9 +140,8 @@ def main(argv):
         # Other approach iterates entry in conn.response to access a dict version
         entry_counter = 0
         for entry in entry_generator:
-            logging.debug(len(conn.entries))
-            logging.info(entry)
-            logging.info(conn.entries[entry_counter].entry_to_ldif())
+            logging.info("Current entry ({} of {}): ==>\n{}\n<===".format(entry_counter, conn.entries, entry))
+            logging.info("LDIFoutput: ==>\n{}\n<===".format(conn.entries[entry_counter].entry_to_ldif()))
             # TODO: convert the multi-value attributes presented as lists to output-compatible formats like strings
             output_string = str(config["service"]["outputs"]["default"]).format(dn=entry["dn"], **entry["attributes"])
             print(output_string)
