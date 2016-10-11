@@ -80,25 +80,36 @@ def main(argv):
 
     # Test config
     myconfig = DirectoryQuery.config.Config(filename=args.config_file)
+    myoutput = myconfig.service()
+    logging.info("==*== services\n         {:s}".format(myconfig.services))
+    logging.info("==*== servers[0]\n         {:s}".format(myoutput.servers[0]))
+    logging.info("==*== outputs[_simple]\n         {:s}".format(myoutput.outputs["_simple"]))
+    logging.info("==*== outputs[default]\n         {:s}".format(myoutput.outputs["default"]))
+    logging.info("==*== searches[default]\n         {:s}".format(myoutput.searches["default"]))
+    logging.info("==*==")
+
 
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
-    formatters = {"title":format_multivalue_string}
+    formatters = {"title": format_multivalue_string}
 
-    # Define the set of all attributes we will query, assemble from defaults,
-    # the configuration, and output needs.
-    # Remove dn to avoid a duplicate key error in output, where we auto-force dn inclusion anyway
-    attributes_to_query = set(["objectClass"])
-    attributes_to_query |= DirectoryQuery.utils.get_named_format_fields(config["service"]["outputs"]["default"])
-    if config["service"]["server"]["add_attributes"]:
-        attributes_to_query |= set(config["service"]["server"]["add_attributes"])
-    else:
-        attributes_to_query |= set([ldap3.ALL_ATTRIBUTES, ldap3.ALL_OPERATIONAL_ATTRIBUTES])
+    # Define the set of all attributes we will query, assemble from the
+    # service/server configuration, and fields used by the selected output.
+    attributes_to_query = myoutput.servers[0].attributes
+    attributes_to_query |= myoutput.outputs["default"].named_format_elements
+    # Remove dn to avoid a duplicate key error in output, where we auto-force
+    # dn inclusion anyway in the record display loop
     attributes_to_query.discard("dn")
     logging.debug("attributes_to_query={}".format(attributes_to_query))
-    attribute_list = list(attributes_to_query)
-    logging.debug("attribute_list={}".format(attribute_list))
+
+
+    ##########
+    # FIXME
+    logging.debug("CONFIG=%s", myconfig)
+    logging.error("ABORTING AT DEVELOPER INSISTENCE FOR TESTING")
+    return 1
+    ##########
 
     # Establish the set of servers we will contact
     # Iteratively build the server list to work around ldap3 not
@@ -116,6 +127,7 @@ def main(argv):
         #conn.search(config["service"]["server"]["base"], config["search"]["filter"])
         #for entry in conn.response
         logging.debug("Reached server %s", conn.server)
+        attribute_list = list(attributes_to_query)
         entry_generator = conn.extend.standard.paged_search(search_base=config["service"]["server"]["base"],
                                                             search_filter=config["service"]["searches"]["default"],
                                                             search_scope=ldap3.SUBTREE,
@@ -130,7 +142,8 @@ def main(argv):
             logging.debug(len(conn.entries))
             logging.info(entry)
             logging.info(conn.entries[entry_counter].entry_to_ldif())
-            output_string = str(config["outputs"]["default"]).format(dn=entry["dn"], **entry["attributes"])
+            # TODO: convert the multi-value attributes presented as lists to output-compatible formats like strings
+            output_string = str(config["service"]["outputs"]["default"]).format(dn=entry["dn"], **entry["attributes"])
             print(output_string)
             entry_counter += 1
 

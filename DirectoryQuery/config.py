@@ -10,6 +10,9 @@ import logging
 import json
 import codecs
 
+# Non-standard imports
+import ldap3
+
 # Package imports
 import DirectoryQuery.utils
 
@@ -23,12 +26,11 @@ class Server(object):
 
         for uri in args:
             self.uris.append(uri)
-        for uri in kwargs["uris"]:
-            self.uris.append(uri)
-        if kwargs["base"]:
-            self.base = kwargs["base"]
-        for attribute in kwargs["add_attributes"]:
-            self.attributes.add(attribute)
+        self.uris.extend(kwargs.get(u'uris', list()))
+        self.base = kwargs.get(u'base', None)
+        # Add requested attributes to the server defaults
+        self.attributes |= set(kwargs.get(u'add_attributes', list()))
+
 
     def __repr__(self):
         return(u'{}.{}(uris={}, base=\"{}\", attributes={})'
@@ -47,7 +49,7 @@ class Search(object):
 
         for filter_string in args:
             self.filter = filter_string
-        self.filter = kwargs.setdefault(u'filter', None)
+        self.filter = kwargs.get(u'filter', None)
 
     def __repr__(self):
         return (u'{}.{}({})'
@@ -66,7 +68,7 @@ class Output(object):
 
         for output_string in args:
             self.output = output_string
-        self.output = kwargs.setdefault(u'output', None)
+        self.output = kwargs.get(u'output', None)
 
         if self.output:
             self.all_format_elements = DirectoryQuery.utils.get_format_fields(self.output)
@@ -97,9 +99,9 @@ class Service(object):
         self.default_output = None
         self.default_search = None
 
-        self.section_map = {'server': self.add_server,
-                            'searches': self.add_search,
-                            'outputs': self.add_output
+        self.section_map = {u'server': self.add_server,
+                            u'searches': self.add_search,
+                            u'outputs': self.add_output
                             }
 
         # Extract known sections from incoming settings
@@ -153,21 +155,22 @@ class Config(object):
         self.encoding = "utf-8"
         self.default_service = None
 
-        if "filename" in kwargs:
-            logging.debug("Config.filename={}".format(kwargs["filename"]))
+        if u'filename' in kwargs:
+            logging.debug("Config.filename={}".format(kwargs[u'filename']))
             self._filename = kwargs["filename"]
-            self._config = self.load_configuration(kwargs["filename"], encoding=self.encoding)
+            self._config = self.load_configuration(kwargs[u'filename'], encoding=self.encoding)
         logging.debug("_config={}".format(self._config))
 
         # TODO: accept additional configs in kwargs
         for svc in self._config:
+            logging.debug("Found top-level {} with name {}".format(svc, self._config[svc][u'name']))
             service = self._config[svc]
-            self.services_available[service["name"]] = Service(name=service["name"],
-                                                               server=service["server"],
-                                                               searches=service["searches"],
-                                                               outputs=service["outputs"])
-            if not self.default_service or service["name"].is_default:
-                self.default_service = service["name"]
+            self.services_available[service[u'name']] = Service(name=service[u'name'],
+                                                                server=service[u'server'],
+                                                                searches=service[u'searches'],
+                                                                outputs=service[u'outputs'])
+            if not self.default_service or service[u'name'].get(u'is_default', False):
+                self.default_service = service[u'name']
 
     @property
     def services(self):
@@ -195,7 +198,7 @@ class Config(object):
                           u', '.join(args)))
 
     @staticmethod
-    def load_configuration(configuration_source, parent_configuration=None, encoding="utf-8"):
+    def load_configuration(configuration_source, parent_configuration=None, encoding=u'utf-8'):
         """
 
         :type configuration_source: string
@@ -204,6 +207,8 @@ class Config(object):
         assert configuration_source is not None
         if parent_configuration:
             config = parent_configuration
-        with codecs.open(configuration_source, "rt", encoding=encoding) as json_config_file:
+        else:
+            config = dict()
+        with codecs.open(configuration_source, u'rt', encoding=encoding) as json_config_file:
             config = json.load(json_config_file)
         return config
