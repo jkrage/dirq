@@ -83,11 +83,11 @@ def main(argv):
     mysearch = myservice.searches["default"]
     myoutputs = myservice.outputs
     myoutput = myservice.outputs["default"]
-    logging.info("==*== services\n         {:s}".format(myconfig.services))
-    logging.info("==*== servers[0]\n         {:s}".format(myserver))
-    logging.info("==*== outputs[_simple]\n         {:s}".format(myoutputs["_simple"]))
-    logging.info("==*== outputs[default]\n         {:s}".format(myoutput))
-    logging.info("==*== searches[default]\n         {:s}".format(mysearch))
+    logging.info("==*== services\n         %s", myconfig.services)
+    logging.info("==*== servers[0]\n         %s", myserver)
+    logging.info("==*== outputs[_simple]\n         %s", myoutputs["_simple"])
+    logging.info("==*== outputs[default]\n         %s", myoutput)
+    logging.info("==*== searches[default]\n         %s", mysearch)
     logging.info("==*==")
 
     # During development, add logging from ldap3 library to our log stream
@@ -103,8 +103,7 @@ def main(argv):
     # Remove dn to avoid a duplicate key error in output, where we auto-force
     # dn inclusion anyway in the record display loop
     attributes_to_query.discard("dn")
-    logging.debug("attributes_to_query={}".format(attributes_to_query))
-
+    logging.debug("attributes_to_query=%s", attributes_to_query)
 
     ##########
     # FIXME
@@ -141,9 +140,11 @@ def main(argv):
         # Other approach iterates entry in conn.response to access a dict version
         entry_counter = 0
         for entry in entry_generator:
-            logging.info("Current entry ({} of {}): ==>\n{}\n<===".format(entry_counter, conn.entries, entry))
-            logging.info("LDIFoutput: ==>\n{}\n<===".format(conn.entries[entry_counter].entry_to_ldif()))
-            # TODO: convert the multi-value attributes presented as lists to output-compatible formats like strings
+            logging.info("Current entry (%d of %d): ==>\n%s\n<===",
+                         entry_counter, len(conn.entries), entry)
+            logging.info("LDIFoutput: ==>\n%s\n<===",
+                         conn.entries[entry_counter].entry_to_ldif())
+            # TODO: convert multi-value attributes presented as lists to output-friendly formats
             output_string = str(myoutput.output).format(dn=entry["dn"], **entry["attributes"])
             print(output_string)
             entry_counter += 1
