@@ -47,7 +47,8 @@ def load_configuration(configuration_source, parent_configuration={}):
 
 
 def format_multivalue_string(raw_value):
-    logging.info(">>>>>>>>>>>>>>> format_multivalue_string={}".format(raw_value))
+    logging.info(">>>>>>>>>>>>>>> format_multivalue_string=%s",
+                 raw_value)
     if isinstance(raw_value, list):
         return u' '.join(raw_value)
     else:
