@@ -37,10 +37,9 @@ import DirectoryQuery.config
 #   Cleanup directory instance(s)
 #     Teardown any outstanding connections
 
-
-def load_configuration(configuration_source, parent_configuration={}):
+def load_configuration(configuration_source, parent_configuration=None):
     assert configuration_source is not None
-    config = parent_configuration
+    config = parent_configuration or dict()
     with open(configuration_source) as json_config_file:
         config = json.load(json_config_file)
     return config
