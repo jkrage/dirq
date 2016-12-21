@@ -44,7 +44,7 @@ class Server(object):
 class Search(object):
     """ Class for a search setup """
     def __init__(self, *args, **kwargs):
-        logging.debug("Search: {}".format(kwargs))
+        logging.debug("Search: %s", kwargs)
         self.filter = None
 
         for filter_string in args:
@@ -61,7 +61,7 @@ class Search(object):
 class Output(object):
     """ Class for output formats """
     def __init__(self, *args, **kwargs):
-        logging.debug("Output: {}".format(kwargs))
+        logging.debug("Output: %s", kwargs)
         self.output = None
         self.all_format_elements = None
         self.named_format_elements = None
@@ -73,8 +73,6 @@ class Output(object):
         if self.output:
             self.all_format_elements = DirectoryQuery.utils.get_format_fields(self.output)
             self.named_format_elements = DirectoryQuery.utils.get_named_format_fields(self.output)
-            #if self.all_format_elements != self.named_format_elements:
-            #    logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
 
     def __repr__(self):
         return (u'{}.{}({})'
@@ -102,36 +100,37 @@ class Service(object):
         self.section_map = {u'server': self.add_server,
                             u'searches': self.add_search,
                             u'outputs': self.add_output
-                            }
+                           }
 
         # Extract known sections from incoming settings
         for section in self.section_map:
-            logging.debug("Seeking config section {}".format(section))
+            logging.debug("Seeking config section %s", section)
             if section in kwargs:
                 self.section_map[section](kwargs[section])
-        logging.debug("Config.servers  = {}".format(self.servers))
-        logging.debug("Config.searches = {}".format(self.searches))
-        logging.debug("Config.outputs  = {}".format(self.outputs))
+        logging.debug("Config.servers  = %s", self.servers)
+        logging.debug("Config.searches = %s", self.searches)
+        logging.debug("Config.outputs  = %s", self.outputs)
 
-    def add_server(self, server=dict()):
-        logging.debug("Adding server configuration {}".format(server))
+    def add_server(self, server=None):
+        logging.debug("Adding server configuration %s", server)
         self.servers.append(Server(**server))
 
-    def add_search(self, search=dict()):
+    def add_search(self, search=None):
         for name, filter_string in search.items():
-            logging.debug("Adding search configuration {}".format(search))
+            logging.debug("Adding search configuration %s", search)
             self.searches[name] = Search(filter=filter_string)
         if not self.default_search:
             self.default_search = name
 
-    def add_output(self, output=dict()):
+    def add_output(self, output=None):
         for name, output_string in output.items():
-            logging.debug("Adding output configuration {}".format(output))
+            logging.debug("Adding output configuration %s", output)
             self.outputs[name] = Output(output=output_string)
             if not self.default_output:
                 self.default_output = name
             if self.outputs[name].all_format_elements != self.outputs[name].named_format_elements:
-                logging.warn("Output type \"%s\" uses un-named fields, un-expected output may result.", name)
+                logging.warn("Output type \"%s\" uses un-named fields,"
+                             "un-expected output may result.", name)
 
 
     def __repr__(self):
@@ -156,14 +155,15 @@ class Config(object):
         self.default_service = None
 
         if u'filename' in kwargs:
-            logging.debug("Config.filename={}".format(kwargs[u'filename']))
+            logging.debug("Config.filename=%s", kwargs[u'filename'])
             self._filename = kwargs["filename"]
             self._config = self.load_configuration(kwargs[u'filename'], encoding=self.encoding)
-        logging.debug("_config={}".format(self._config))
+        logging.debug("_config=%s", self._config)
 
         # TODO: accept additional configs in kwargs
         for svc in self._config:
-            logging.debug("Found top-level {} with name {}".format(svc, self._config[svc][u'name']))
+            logging.debug("Found top-level %s with name %s",
+                          svc, self._config[svc][u'name'])
             service = self._config[svc]
             self.services_available[service[u'name']] = Service(name=service[u'name'],
                                                                 server=service[u'server'],
