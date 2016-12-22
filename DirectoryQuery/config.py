@@ -82,12 +82,11 @@ class Output(object):
 
 
 class Service(object):
-    """
-    A Service is an encapsulation of the specific information required
-    to access a particular directory service instantiation. This includes
-    the URI(s) to contact, one or more searches that can be run against
-    any of those URIs, and one or more registry the end-user can use to
-    format the output from the search.
+    """ Service is an encapsulation of the specific information required
+        to access a particular directory service instantiation. This includes
+        the URI(s) to contact, one or more searches that can be run against
+        any of those URIs, and one or more registry the end-user can use to
+        format the output from the search.
 
     """
     def __init__(self, *args, **kwargs):
@@ -199,10 +198,14 @@ class Config(object):
 
     @staticmethod
     def load_configuration(configuration_source, parent_configuration=None, encoding=u'utf-8'):
-        """
+        """ Load configuration information from an external file
 
-        :type configuration_source: string
-        :type parent_configuration: dict
+            :param configuration_source: filename containing the configuration, e.g., config.json
+            :param parent_configuration: existing configuration the new file extends
+            :param encoding: UTF encoding for the file
+            :type configuration_source: string
+            :type parent_configuration: dict
+            :rtype: dict
         """
         assert configuration_source is not None
         if parent_configuration:
