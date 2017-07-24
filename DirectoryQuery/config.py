@@ -24,17 +24,20 @@ class Server(object):
         self.base = None
         self.attributes = set([u'objectClass'])
         self.ldap_attribute_formatters = {u'title': DirectoryQuery.utils.format_multivalue_string}
-        self.ldap_pool_strategy = ldap3.FIRST
-        self.ldap_pool_active = True
-        self.ldap_pool_exhaust = True
 
+        # Combine any provided URIs into a single list
         for uri in args:
             self.uris.append(uri)
         self.uris.extend(kwargs.get(u'uris', list()))
-        self.base = kwargs.get(u'base', None)
+
         # Add requested attributes to the server defaults
         self.attributes |= set(kwargs.get(u'add_attributes', list()))
 
+        self.base = kwargs.get(u'base', None)
+        self.ldap_pool_strategy = kwargs.get(u'ldap_pool_strategy', ldap3.FIRST)
+        self.ldap_pool_active = kwargs.get(u'ldap_pool_active', True)
+        self.ldap_pool_exhaust = kwargs.get(u'ldap_pool_exhaust', True)
+        self.ldap_scope = kwargs.get(u'ldap_scope', ldap3.SUBTREE)
 
     def __repr__(self):
         return(u'{}.{}(uris={}, base=\"{}\", attributes={})'
