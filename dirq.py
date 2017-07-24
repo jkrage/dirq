@@ -82,16 +82,6 @@ def main(argv):
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
-    # TODO: Move attribute analysis into Search
-    # Define the set of all attributes we will query, assemble from the
-    # service/server configuration, and fields used by the selected output.
-    attributes_to_query = myserver.attributes
-    attributes_to_query |= myoutput.named_format_elements
-    # Remove dn to avoid a duplicate key error in output, where we auto-force
-    # dn inclusion anyway in the record display loop
-    attributes_to_query.discard("dn")
-    logging.debug("attributes_to_query=%s", attributes_to_query)
-
     ##########
     # FIXME
     logging.debug("CONFIG=%s", myconfig)
@@ -101,28 +91,15 @@ def main(argv):
 
     # Connect to the specified Service's Server
     logging.debug("Attempting connections to %s", myserver.uris)
-    with myserver.connection() as conn:
-        logging.debug("Reached server %s", conn.server)
-        attribute_list = list(attributes_to_query)
-        entry_generator = conn.extend.standard.paged_search(search_base=myserver.base,
-                                                            search_filter=mysearch.filter,
-                                                            search_scope=ldap3.SUBTREE,
-                                                            attributes=attribute_list,
-                                                            get_operational_attributes=True,
-                                                            paged_size=10,
-                                                            generator=True)
-        # Keep a counter, so the non-dict object from conn.entries can be accessed
-        # Other approach iterates entry in conn.response to access a dict version
-        entry_counter = 0
-        for entry in entry_generator:
-            logging.info("Current entry (%d of %d): ==>\n%s\n<===",
-                         entry_counter, len(conn.entries), entry)
-            logging.info("LDIFoutput: ==>\n%s\n<===",
-                         conn.entries[entry_counter].entry_to_ldif())
-            # TODO: convert multi-value attributes presented as lists to output-friendly formats
-            output_string = str(myoutput.output).format(dn=entry["dn"], **entry["attributes"])
-            print(output_string)
-            entry_counter += 1
+    record_count = 0
+    for record in myservice.query():
+        if record_count:
+            print()
+        print(record)
+        record_count += 1
+    else:
+        print()
+        logging.info("Total of %d records", record_count)
 
 # When called directly as a script...
 if __name__ == '__main__':

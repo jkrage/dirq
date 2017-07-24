@@ -160,6 +160,45 @@ class Service(object):
                 logging.warn("Output type \"%s\" uses un-named fields,"
                              "un-expected output may result.", name)
 
+    def query(self, output_name="default", search_name="default"):
+        myserver = self.servers[0]
+        myoutput = self.outputs[output_name]
+        mysearch = self.searches[search_name]
+
+        # TODO: Move attribute analysis into Search
+        # Define the set of all attributes we will query, assemble from the
+        # service/server configuration, and fields used by the selected output.
+        attributes_to_query = myserver.attributes
+        attributes_to_query |= myoutput.named_format_elements
+        # Remove dn to avoid a duplicate key error in output, where we auto-force
+        # dn inclusion anyway in the record display loop
+        attributes_to_query.discard("dn")
+        logging.debug("attributes_to_query=%s", attributes_to_query)
+
+        found_records_list = []
+        with myserver.connection() as conn:
+            logging.debug("Reached server %s", conn.server)
+            attribute_list = list(attributes_to_query)
+            entry_generator = conn.extend.standard.paged_search(search_base=myserver.base,
+                                                                search_filter=mysearch.filter,
+                                                                search_scope=myserver.ldap_scope,
+                                                                attributes=attribute_list,
+                                                                get_operational_attributes=True,
+                                                                paged_size=10,
+                                                                generator=True)
+            # Keep a counter, so the non-dict object from conn.entries can be accessed
+            # Other approach iterates entry in conn.response to access a dict version
+            entry_counter = 0
+            for entry in entry_generator:
+                logging.info("Current entry (%d of %d): ==>\n%s\n<===",
+                             (entry_counter + 1), len(conn.entries), entry)
+                logging.info("LDIFoutput: ==>\n%s\n<===",
+                             conn.entries[entry_counter].entry_to_ldif())
+                # TODO: convert multi-value attributes presented as lists to output-friendly formats
+                output_string = str(myoutput.output).format(dn=entry["dn"], **entry["attributes"])
+                found_records_list.append(output_string)
+                entry_counter += 1
+        return found_records_list
 
     def __repr__(self):
         args = []
