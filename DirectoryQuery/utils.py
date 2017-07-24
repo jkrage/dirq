@@ -8,6 +8,13 @@
 import string
 
 
+def format_multivalue_string(raw_value):
+    if isinstance(raw_value, list):
+        return u' '.join(raw_value)
+    else:
+        return str(raw_value)
+
+
 def get_format_fields(format_string):
     """Parse a string.format() format_string specification and extract
        any named fields that will be needed by the output.

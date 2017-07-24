@@ -23,6 +23,10 @@ class Server(object):
         self.uris = []
         self.base = None
         self.attributes = set([u'objectClass'])
+        self.ldap_attribute_formatters = {u'title': DirectoryQuery.utils.format_multivalue_string}
+        self.ldap_pool_strategy = ldap3.FIRST
+        self.ldap_pool_active = True
+        self.ldap_pool_exhaust = True
 
         for uri in args:
             self.uris.append(uri)
@@ -39,6 +43,28 @@ class Server(object):
                           self.uris,
                           self.base,
                           self.attributes))
+
+    def build_connection_pool(self):
+        # Iteratively build the server list to work around ldap3 not
+        # accepting formatter in ServerPool calls
+        server_pool = None
+        server_list = []
+        for uri in self.uris:
+            this_server = ldap3.Server(uri, formatter=self.ldap_attribute_formatters)
+            server_list.append(this_server)
+        if server_list:
+            server_pool = ldap3.ServerPool(server_list,
+                                           pool_strategy=self.ldap_pool_strategy,
+                                           active=self.ldap_pool_active,
+                                           exhaust=self.ldap_pool_exhaust)
+        return server_pool
+
+    def connection(self):
+        # TODO: Consider schema load/save
+        # TODO: Add user options, SSL/TLS options to connection
+        return ldap3.Connection(self.build_connection_pool(),
+                                read_only=True,
+                                return_empty_attributes=True)
 
 
 class Search(object):

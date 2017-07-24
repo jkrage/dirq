@@ -44,16 +44,6 @@ def load_configuration(configuration_source, parent_configuration=None):
         config = json.load(json_config_file)
     return config
 
-
-def format_multivalue_string(raw_value):
-    logging.info(">>>>>>>>>>>>>>> format_multivalue_string=%s",
-                 raw_value)
-    if isinstance(raw_value, list):
-        return u' '.join(raw_value)
-    else:
-        return str(raw_value)
-
-
 def main(argv):
     # Setup the command line arguments.
     parser = argparse.ArgumentParser(description='Query a central directory')
@@ -92,8 +82,6 @@ def main(argv):
     # During development, add logging from ldap3 library to our log stream
     #ldap3.utils.log.set_library_log_detail_level(ldap3.utils.log.BASIC)
 
-    formatters = {u'title': format_multivalue_string}
-
     # TODO: Move attribute analysis into Search
     # Define the set of all attributes we will query, assemble from the
     # service/server configuration, and fields used by the selected output.
@@ -111,21 +99,9 @@ def main(argv):
     #return 1
     ##########
 
-    # Establish the set of servers we will contact
-    # Iteratively build the server list to work around ldap3 not
-    # accepting formatter in ServerPool calls
+    # Connect to the specified Service's Server
     logging.debug("Attempting connections to %s", myserver.uris)
-    server_list = []
-    for uri in myserver.uris:
-        this_server = ldap3.Server(uri, formatter=formatters)
-        server_list.append(this_server)
-    server_pool = ldap3.ServerPool(server_list, pool_strategy=ldap3.FIRST, active=True)
-
-    # TODO: Consider schema load/save
-    # TODO: Add user options, SSL/TLS options to connection
-    with ldap3.Connection(server_pool, read_only=True, return_empty_attributes=True) as conn:
-        #conn.search(myserver.base, mysearch.filter)
-        #for entry in conn.response
+    with myserver.connection() as conn:
         logging.debug("Reached server %s", conn.server)
         attribute_list = list(attributes_to_query)
         entry_generator = conn.extend.standard.paged_search(search_base=myserver.base,
