@@ -280,6 +280,6 @@ class Config(object):
             config = parent_configuration
         else:
             config = dict()
-        with codecs.open(configuration_source, u'rt', encoding=encoding) as json_config_file:
+        with codecs.open(configuration_source, u'r', encoding=encoding) as json_config_file:
             config = json.load(json_config_file)
         return config
